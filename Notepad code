@@ -1,0 +1,229 @@
+#include <iostream>
+#include <conio.h>
+#include <cstdlib>
+#include <fstream>  
+#include <string> 
+using namespace std;
+
+template<typename T>
+class doubly
+{
+    struct Node
+    {
+        T data;
+        Node* next;
+        Node* prev;
+    public:
+        Node() :next(nullptr), prev(nullptr)
+        {}
+        Node(T val, Node* nptr = nullptr, Node* pptr = nullptr) :data(val), next(nptr), prev(pptr)
+        {}
+    };
+    Node* head, * tail, * cursor;
+    int size;
+public:
+    doubly()
+    {
+        head = tail = cursor = new Node;
+        size = 0;
+    }
+
+
+    void loadFromFile(string filename)
+    {
+        ifstream inFile(filename);
+        if (!inFile) {
+            cout << "No file found with the name: " << filename << endl;
+            return;
+        }
+
+        char ch;
+        while (inFile.get(ch)) {
+            insertAtTail(ch);
+        }
+        cursor = tail;
+        inFile.close();
+    }
+
+    void saveToFile(string filename)
+    {
+        ofstream outFile(filename);
+        if (!outFile) {
+            cout << "Error opening file for writing!" << endl;
+            return;
+        }
+
+        Node* temp = head->next;
+        while (temp != nullptr)
+        {
+            outFile << temp->data;
+            temp = temp->next;
+        }
+        outFile.close();
+    }
+
+    void insertAtTail(T val)
+    {
+        Node* newNode = new Node(val, nullptr, tail);
+        tail->next = newNode;
+        tail = newNode;
+        if (cursor == tail->prev) {
+            cursor = newNode;
+        }
+        size++;
+    }
+
+    void deleteATHead() {
+        if (size > 0) {
+            Node* temp = head->next;
+            head->next = head->next->next;
+            if (temp->next)
+                temp->next->prev = head;
+            delete temp;
+
+            if (size == 1)
+                tail = head;
+            size--;
+        }
+    }
+
+    void deleteATTail() {
+        tail = tail->prev;
+        delete tail->next;
+        tail->next = nullptr;
+        size--;
+    }
+
+    void insertAtCursor(T val)
+    {
+        if (cursor == tail) {
+            insertAtTail(val);
+        }
+        else {
+            Node* newNode = new Node(val, cursor, cursor->prev);
+            if (cursor->prev == head) {
+                head->next = newNode;
+            }
+            else {
+                cursor->prev->next = newNode;
+            }
+            cursor->prev = newNode;
+            size++;
+        }
+    }
+
+    void deleteAtCursor()
+    {
+        if (size > 0)
+        {
+            if (cursor == head->next) {
+                deleteATHead();
+                cursor = head->next;
+            }
+            else if (cursor == tail) {
+                deleteATTail();
+                cursor = tail;
+            }
+            else {
+                Node* dlt = cursor;
+                cursor->prev->next = cursor->next;
+                if (cursor->next != nullptr) {
+                    cursor->next->prev = cursor->prev;
+                }
+                cursor = cursor->next;
+                delete dlt;
+                size--;
+            }
+            if (size == 0) {
+                cursor = head;
+            }
+        }
+    }
+
+
+    void moveRight() {
+        if (cursor != nullptr && cursor->next != nullptr) {
+            cursor = cursor->next;
+        }
+    }
+
+    void moveLeft() {
+        if (cursor != nullptr && cursor->prev != nullptr && cursor->prev != head) {
+            cursor = cursor->prev;
+        }
+    }
+
+    void print2()
+    {
+        Node* temp = head->next;
+        while (temp != nullptr)
+        {
+            cout << temp->data;
+            if (temp == cursor) {
+                cout << "| ";
+            }
+            temp = temp->next;
+        }
+        cout << endl;
+    }
+    int getSize() const {
+        return size;
+    }
+
+};
+
+bool isValid(char ch) {
+    if (ch >= 'A' && ch <= 'Z') return true;
+    if (ch >= 'a' && ch <= 'z') return true;
+    if (ch == ' ') return true;
+    if (ch == '.') return true;
+    if (ch == ',') return true;
+    if (ch == '"') return true;
+    if (ch == '\'') return true;
+    return false;
+}
+
+int main()
+{
+    doubly<char> d1;
+    char key = ' ';
+    string filename;
+    cout << "\n\n\t\tNotepad 2.0\n\n>To Exit enter Esc\n\n";
+    cout << "Enter filename to load or leave blank to start new : ";
+    getline(cin, filename);
+    cout << endl;
+    if (!filename.empty()) {
+        d1.loadFromFile(filename);
+    }
+
+    while (key != 27) {
+        int size = d1.getSize();
+        key = _getch();
+        if (isValid(key)) {
+            d1.insertAtCursor(key);
+        }
+        if (key == 8 && size > 0) {
+            d1.deleteAtCursor();
+        }
+        if (key == 224 || key == 0) {
+            key = _getch();
+            if (key == 77) {
+                d1.moveRight();
+            }
+            if (key == 75) {
+                d1.moveLeft();
+            }
+        }
+
+        system("cls");
+        cout << "\n\n\t\tNotepad 2.0\n\n>To Exit enter Esc\n\n";
+        d1.print2();
+    }
+
+    cout << "\nEnter filename to save: ";
+    getline(cin, filename);
+    if (!filename.empty()) {
+        d1.saveToFile(filename);
+    }
+
+}
