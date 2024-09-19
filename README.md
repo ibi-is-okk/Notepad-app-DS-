@@ -1,4 +1,4 @@
 # Notepad-app-DS-
-##c++
-##>includes saving the file and opening old files
+## >c++
+## >includes saving the file and opening old files
 
